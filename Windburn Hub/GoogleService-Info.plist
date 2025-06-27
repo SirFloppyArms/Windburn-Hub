@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyBrhE0h-Ccge0EwnjzT-8y2F8UjSXfvwGA</string>
+	<key>GCM_SENDER_ID</key>
+	<string>945676691465</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.sus.nolanlaw.windburnhub</string>
+	<key>PROJECT_ID</key>
+	<string>windburnhub</string>
+	<key>STORAGE_BUCKET</key>
+	<string>windburnhub.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:945676691465:ios:4a455f83d5ad91190470d8</string>
+</dict>
+</plist>

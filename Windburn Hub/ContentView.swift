@@ -8,17 +8,20 @@
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+    @EnvironmentObject var authViewModel: AuthViewModel
 
-#Preview {
-    ContentView()
+    var body: some View {
+        NavigationView {
+            if authViewModel.user != nil {
+                VStack {
+                    Text("Welcome, \(authViewModel.role.capitalized)")
+                    Button("Log Out") {
+                        authViewModel.logOut()
+                    }
+                }
+            } else {
+                LoginView()
+            }
+        }
+    }
 }
