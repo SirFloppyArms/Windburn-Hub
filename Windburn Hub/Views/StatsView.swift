@@ -1,0 +1,16 @@
+//
+//  StatsView.swift
+//  Windburn Hub
+//
+//  Created by Nolan Law on 2025-06-30.
+//
+
+import SwiftUI
+
+struct StatsView: View {
+    var body: some View {
+        Text("Welcome to your training stats!")
+            .font(.title)
+            .padding()
+    }
+}

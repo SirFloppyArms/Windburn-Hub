@@ -13,12 +13,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             if authViewModel.user != nil {
-                VStack {
-                    Text("Welcome, \(authViewModel.role.capitalized)")
-                    Button("Log Out") {
-                        authViewModel.logOut()
-                    }
-                }
+                MainTabView()
             } else {
                 LoginView()
             }

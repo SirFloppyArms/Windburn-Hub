@@ -12,12 +12,14 @@ import FirebaseFirestore
 class AuthViewModel: ObservableObject {
     @Published var user: User?
     @Published var role: String = ""
+    @Published var displayName: String = ""
 
     private let db = Firestore.firestore()
 
     init() {
         self.user = Auth.auth().currentUser
         fetchUserRole()
+        fetchDisplayName()
     }
 
     func signUp(email: String, password: String, name: String, role: String) {
@@ -45,6 +47,7 @@ class AuthViewModel: ObservableObject {
             }
 
             self.user = result?.user
+            self.fetchDisplayName()
         }
     }
 
@@ -76,6 +79,16 @@ class AuthViewModel: ObservableObject {
         db.collection("users").document(uid).getDocument { document, error in
             if let document = document, document.exists {
                 self.role = document.data()?["role"] as? String ?? ""
+            }
+        }
+    }
+
+    func fetchDisplayName() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(uid).getDocument { document, error in
+            if let document = document, document.exists {
+                self.displayName = document.data()?["name"] as? String ?? ""
             }
         }
     }
