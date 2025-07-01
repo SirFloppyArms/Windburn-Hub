@@ -13,4 +13,5 @@ struct AppUser: Identifiable, Codable {
     var name: String
     var email: String
     var role: String
+    var profileImageName: String // 👈 Add this
 }

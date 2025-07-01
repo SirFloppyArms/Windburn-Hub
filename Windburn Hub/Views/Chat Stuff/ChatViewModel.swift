@@ -5,8 +5,7 @@
 //  Created by Nolan Law on 2025-06-30.
 //
 
-import Foundation
-import Firebase
+import SwiftUI
 import FirebaseFirestore
 
 class ChatViewModel: ObservableObject {
@@ -17,7 +16,7 @@ class ChatViewModel: ObservableObject {
     private var listener: ListenerRegistration?
 
     let currentUserID: String
-    let currentUserName: String
+    @Published var currentUserName: String
     let chatID: String
     let chatTitle: String
 
@@ -29,21 +28,13 @@ class ChatViewModel: ObservableObject {
         fetchMessages()
     }
 
-    func fetchMessages() {
-        listener = db.collection("chats")
-            .document(chatID)
-            .collection("messages")
-            .order(by: "timestamp")
-            .addSnapshotListener { snapshot, error in
-                guard let documents = snapshot?.documents else { return }
-                self.messages = documents.compactMap { doc in
-                    try? doc.data(as: Message.self)
-                }
-            }
-    }
-
     func sendMessage() {
         guard !newMessageText.isEmpty else { return }
+
+        guard !currentUserName.isEmpty else {
+            print("🛑 Cannot send message: display name is empty")
+            return
+        }
 
         let message = Message(
             text: newMessageText,
@@ -62,6 +53,24 @@ class ChatViewModel: ObservableObject {
         } catch {
             print("Failed to send message: \(error)")
         }
+    }
+
+    func fetchMessages() {
+        listener = db.collection("chats")
+            .document(chatID)
+            .collection("messages")
+            .order(by: "timestamp")
+            .addSnapshotListener { snapshot, error in
+                guard let documents = snapshot?.documents else { return }
+                self.messages = documents.compactMap { doc in
+                    do {
+                        return try doc.data(as: Message.self)
+                    } catch {
+                        print("🧨 Message decode failed: \(error.localizedDescription)")
+                        return nil
+                    }
+                }
+            }
     }
 
     deinit {

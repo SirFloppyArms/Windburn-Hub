@@ -10,16 +10,24 @@ import FirebaseFirestore
 
 class UserListViewModel: ObservableObject {
     @Published var users: [AppUser] = []
-    private let db = Firestore.firestore()
 
-    func fetchUsers(excluding currentUserID: String) {
-        db.collection("users").getDocuments { snapshot, error in
-            guard let documents = snapshot?.documents else { return }
+    func fetchUsers(excluding uid: String) {
+        let db = Firestore.firestore()
+        db.collection("users")
+            .whereField(FieldPath.documentID(), isNotEqualTo: uid)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("❌ Error fetching users: \(error.localizedDescription)")
+                    return
+                }
 
-            self.users = documents.compactMap { doc -> AppUser? in
-                let result = try? doc.data(as: AppUser.self)
-                return result?.id != currentUserID ? result : nil
+                guard let documents = snapshot?.documents else { return }
+
+                self.users = documents.compactMap { doc in
+                    try? doc.data(as: AppUser.self)
+                }
+
+                print("✅ Fetched users: \(self.users.map { $0.name })")
             }
-        }
     }
 }

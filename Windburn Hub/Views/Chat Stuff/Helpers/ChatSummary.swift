@@ -13,4 +13,5 @@ struct ChatSummary: Identifiable, Hashable {
     let lastMessage: String
     let isGroup: Bool
     let targetUserID: String?
+    let profileImageName: String // 👈 Add this
 }

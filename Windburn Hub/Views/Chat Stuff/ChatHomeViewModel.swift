@@ -28,12 +28,13 @@ class ChatHomeViewModel: ObservableObject {
                     title: "Team Chat",
                     lastMessage: lastText,
                     isGroup: true,
-                    targetUserID: nil
+                    targetUserID: nil,
+                    profileImageName: "default"
                 ))
                 dispatch.leave()
             }
 
-        // ✅ Get private chat metadata from chatsIndex
+        // ✅ Load private chats from chatsIndex
         dispatch.enter()
         db.collection("chatsIndex")
             .whereField("participants", arrayContains: userID)
@@ -51,28 +52,23 @@ class ChatHomeViewModel: ObservableObject {
 
                     dispatch.enter()
 
-                    // Load latest message from actual messages subcollection
                     self.db.collection("chats").document(chatID).collection("messages")
                         .order(by: "timestamp", descending: true)
                         .limit(to: 1)
                         .getDocuments { msgSnap, _ in
-                            guard let lastDoc = msgSnap?.documents.first,
-                                  let text = lastDoc["text"] as? String else {
-                                // 🟡 No messages in this chat → don't add it
-                                dispatch.leave()
-                                return
-                            }
+                            let lastText = msgSnap?.documents.first?["text"] as? String ?? "No messages yet"
 
-                            // Fetch other user's name
                             self.db.collection("users").document(otherID).getDocument { userDoc, _ in
                                 let name = userDoc?.data()?["name"] as? String ?? "Unknown"
+                                let profileImage = userDoc?.data()?["profileImage"] as? String ?? "default"
 
                                 summaries.append(ChatSummary(
                                     id: chatID,
                                     title: name,
-                                    lastMessage: text,
+                                    lastMessage: lastText,
                                     isGroup: false,
-                                    targetUserID: otherID
+                                    targetUserID: otherID,
+                                    profileImageName: profileImage // 👈 Include this!
                                 ))
 
                                 dispatch.leave()

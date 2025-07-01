@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SignUpView: View {
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var authViewModel: AuthViewModel
 
     @State private var email = ""
@@ -19,26 +20,26 @@ struct SignUpView: View {
     @State private var errorMessage = ""
     @State private var showError = false
 
-    let roles = ["athlete", "coach"] // Only show athlete and coach
-
-    // Secret keys — keep these hidden and safe
+    let roles = ["athlete", "coach"]
     let coachKey = "wb-COACH-2739-secure"
     let adminKey = "wb-ADMIN-9041-lock"
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
+            Spacer(minLength: 40)
+
+            Image("windburn")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 160, height: 160)
+
             Text("Create Account")
-                .font(.largeTitle)
-                .bold()
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(WindburnColors.primary)
 
-            TextField("Name", text: $name)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-
-            TextField("Email", text: $email)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-
-            SecureField("Password", text: $password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+            WindburnTextField(placeholder: "Name", text: $name)
+            WindburnTextField(placeholder: "Email", text: $email)
+            WindburnTextField(placeholder: "Password", text: $password, isSecure: true)
 
             Picker("Select Role", selection: $selectedRole) {
                 ForEach(roles, id: \.self) { role in
@@ -47,33 +48,44 @@ struct SignUpView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
 
-            // Only show password field if user selects coach
             if selectedRole == "coach" {
-                SecureField("Enter Coach Access Password", text: $rolePassword)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                WindburnTextField(placeholder: "Enter Coach Access Password", text: $rolePassword, isSecure: true)
             }
 
-            Button("Sign Up") {
+            WindburnButton(title: "Sign Up") {
                 signUpTapped()
             }
-            .padding()
 
             if showError {
                 Text(errorMessage)
                     .foregroundColor(.red)
+                    .font(.system(size: 14))
                     .multilineTextAlignment(.center)
+                    .padding(.top, 4)
             }
+
+            Spacer()
         }
-        .padding()
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: colorScheme == .dark
+                    ? [WindburnColors.darkBackground, .black]
+                    : [.white, .gray.opacity(0.1)]
+                ),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+        )
     }
 
     func signUpTapped() {
         var finalRole = selectedRole
 
-        // Handle role password check if "coach" is selected
         if selectedRole == "coach" {
             if rolePassword == adminKey {
-                // It's an admin — treat them like an athlete in UI
                 finalRole = "admin"
             } else if rolePassword == coachKey {
                 finalRole = "coach"
@@ -87,7 +99,6 @@ struct SignUpView: View {
         errorMessage = ""
         showError = false
 
-        // Save role (including secret admin role)
         authViewModel.signUp(email: email, password: password, name: name, role: finalRole)
     }
 }
