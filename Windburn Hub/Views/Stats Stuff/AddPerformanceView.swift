@@ -16,34 +16,56 @@ struct AddPerformanceView: View {
     @State private var result = ""
     @State private var date = Date()
     @State private var isPublic = true
+    @State private var isSaving = false
 
     var body: some View {
-        Form {
-            Section(header: Text("Performance Info")) {
-                TextField("Activity", text: $activity)
-                TextField("Result", text: $result)
-                DatePicker("Date", selection: $date, displayedComponents: .date)
-                Toggle("Public", isOn: $isPublic)
-            }
+        NavigationStack {
+            Form {
+                Section(header: Text("Performance Info")) {
+                    TextField("Activity", text: $activity)
+                    TextField("Result", text: $result)
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                    Toggle("Public", isOn: $isPublic)
+                }
 
-            Button("Save Log") {
-                let log = PerformanceLog(
-                    userId: authVM.user?.uid ?? "",
-                    userName: authVM.displayName,
-                    activity: activity,
-                    result: result,
-                    date: date,
-                    isPublic: isPublic
-                )
-
-                FirestoreService.shared.addPerformanceLog(log) { error in
-                    if error == nil {
-                        viewModel.fetchLogs()
-                        dismiss()
+                Section {
+                    Button {
+                        saveLog()
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                        } else {
+                            Text("Save Log")
+                        }
                     }
+                    .disabled(activity.isEmpty || result.isEmpty || isSaving)
                 }
             }
+            .navigationTitle("Add Performance")
         }
-        .navigationTitle("Add Performance")
+    }
+
+    private func saveLog() {
+        guard let userId = authVM.user?.uid else { return }
+        isSaving = true
+
+        let newLog = PerformanceLog(
+            userId: userId,
+            userName: authVM.displayName,
+            activity: activity,
+            result: result,
+            date: date,
+            isPublic: isPublic
+        )
+
+        viewModel.add(log: newLog) { success in
+            isSaving = false
+            if success {
+                dismiss()
+            } else {
+                // Optional: show alert on failure
+                print("Failed to save log")
+            }
+        }
     }
 }
