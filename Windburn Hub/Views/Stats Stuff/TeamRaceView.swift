@@ -10,6 +10,7 @@ import SwiftUI
 struct TeamRaceView: View {
     @ObservedObject var vm: StatsViewModel
     @State private var selectedUserId: String? = nil
+    @State private var editingLog: RaceLog? = nil
 
     var users: [String: String] {
         Dictionary(grouping: vm.allLogs, by: { $0.userId })
@@ -22,42 +23,45 @@ struct TeamRaceView: View {
     }
 
     var body: some View {
-        VStack {
-            Picker("Select Athlete", selection: $selectedUserId) {
-                Text("Select...").tag(nil as String?)
-                ForEach(users.sorted(by: { $0.value < $1.value }), id: \.key) { (id, name) in
-                    Text(name).tag(id as String?)
+        NavigationStack {
+            VStack {
+                Picker("Select Athlete", selection: $selectedUserId) {
+                    Text("Select...").tag(nil as String?)
+                    ForEach(users.sorted(by: { $0.value < $1.value }), id: \ .key) { (id, name) in
+                        Text(name).tag(id as String?)
+                    }
                 }
-            }
-            .pickerStyle(MenuPickerStyle())
-            .padding()
+                .pickerStyle(.menu)
+                .padding(.horizontal)
 
-            if let userId = selectedUserId, !filteredLogs.isEmpty {
-                List {
-                    ForEach(filteredLogs) { log in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(log.raceName).font(.headline)
-                            Text(log.overallTime)
-                            Text(log.raceDate, style: .date).foregroundColor(.gray)
-
-                            if vm.canEdit(log: log) {
-                                NavigationLink("Edit") {
-                                    EditRaceView(viewModel: vm, log: log)
+                if let _ = selectedUserId, !filteredLogs.isEmpty {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(filteredLogs) { log in
+                                RaceCardView(log: log, canEdit: vm.canEdit(log: log)) {
+                                    editingLog = log
+                                } onDelete: {
+                                    vm.delete(log: log)
                                 }
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.top)
                     }
+                } else if selectedUserId != nil {
+                    ContentUnavailableView("No Public Races", systemImage: "eye.slash", description: Text("This user has no public race logs."))
+                        .padding()
+                } else {
+                    ContentUnavailableView("No Athlete Selected", systemImage: "person.crop.circle.badge.questionmark", description: Text("Select an athlete to view their race logs."))
+                        .padding()
                 }
-            } else if selectedUserId != nil {
-                ContentUnavailableView("No Public Races", systemImage: "eye.slash", description: Text("This user has no public race logs."))
-            } else {
-                ContentUnavailableView("No Athlete Selected", systemImage: "person.crop.circle.badge.questionmark", description: Text("Select an athlete to view their race logs."))
             }
-        }
-        .navigationTitle("Team Races")
-        .refreshable {
-            vm.fetchLogs()
+            .navigationTitle("Team Races")
+            .sheet(item: $editingLog) { log in
+                EditRaceView(viewModel: vm, log: log)
+            }
+            .refreshable {
+                vm.fetchLogs()
+            }
         }
     }
 }
