@@ -9,14 +9,21 @@ import SwiftUI
 
 struct CalendarView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @StateObject private var viewModel = CalendarViewModel()
+    @StateObject private var viewModel: CalendarViewModel
 
     @State private var selectedDate = Date()
     @State private var selectedEvent: Event? = nil
-    @State private var showDetail = false
+    @State private var selectedRace: RaceLog? = nil
 
-    @State private var showForm = false
+    @State private var showEventForm = false
     @State private var eventToEdit: Event? = nil
+
+    @State private var showRaceDetail = false
+    @State private var showEventDetail = false
+
+    init() {
+        _viewModel = StateObject(wrappedValue: CalendarViewModel(authVM: AuthViewModel()))
+    }
 
     var body: some View {
         NavigationView {
@@ -33,21 +40,30 @@ struct CalendarView: View {
                 Divider().padding(.top)
 
                 ScrollView {
-                    let dayEvents = viewModel.events(for: selectedDate)
+                    let dayItems = viewModel.calendarItems(for: selectedDate)
 
-                    if dayEvents.isEmpty {
-                        Text("No events for this day.")
+                    if dayItems.isEmpty {
+                        Text("No events or races for this day.")
                             .foregroundColor(.gray)
                             .padding()
                     } else {
-                        ForEach(dayEvents) { event in
+                        ForEach(dayItems) { item in
                             Button {
-                                selectedEvent = event
-                                showDetail = true
+                                switch item {
+                                case .event(let event):
+                                    selectedEvent = event
+                                    showEventDetail = true
+                                case .race(let race):
+                                    selectedRace = race
+                                    showRaceDetail = true
+                                }
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(event.title).bold()
-                                    Text(event.date.formatted(date: .omitted, time: .shortened))
+                                    HStack {
+                                        Image(systemName: item.typeIcon)
+                                        Text(item.title).bold()
+                                    }
+                                    Text(item.date.formatted(date: .omitted, time: .shortened))
                                 }
                                 .padding()
                                 .background(Color.blue.opacity(0.1))
@@ -61,7 +77,7 @@ struct CalendarView: View {
                 if authViewModel.role == "coach" || authViewModel.role == "admin" {
                     Button(action: {
                         eventToEdit = nil
-                        showForm = true
+                        showEventForm = true
                     }) {
                         Label("Add New Event", systemImage: "plus")
                             .padding()
@@ -72,7 +88,7 @@ struct CalendarView: View {
                     .padding(.bottom)
                 }
             }
-            .sheet(isPresented: $showForm) {
+            .sheet(isPresented: $showEventForm) {
                 EventFormView(viewModel: viewModel, editingEvent: eventToEdit)
             }
             .sheet(item: $selectedEvent) { event in
@@ -81,7 +97,7 @@ struct CalendarView: View {
                     isEditable: authViewModel.role == "coach" || authViewModel.role == "admin",
                     onEdit: {
                         eventToEdit = event
-                        showForm = true
+                        showEventForm = true
                         selectedEvent = nil
                     },
                     onDelete: {
@@ -90,8 +106,11 @@ struct CalendarView: View {
                     }
                 )
             }
+            .sheet(item: $selectedRace) { race in
+                RaceDetailView(race: race)
+            }
             .onAppear {
-                viewModel.fetchEvents()
+                viewModel.fetchAll()
             }
         }
     }

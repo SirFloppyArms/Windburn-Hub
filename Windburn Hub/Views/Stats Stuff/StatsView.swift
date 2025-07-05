@@ -19,14 +19,14 @@ struct StatsView: View {
     var body: some View {
         TabView {
             NavigationStack {
-                PerformanceListView(vm: statsVM)
+                MyRaceListView(vm: statsVM)
             }
             .tabItem {
-                Label("My Stats", systemImage: "person.fill")
+                Label("My Races", systemImage: "person.fill")
             }
 
             NavigationStack {
-                AthleteStatsView(vm: statsVM)
+                TeamRaceView(vm: statsVM)
             }
             .tabItem {
                 Label("Team", systemImage: "person.3.fill")
