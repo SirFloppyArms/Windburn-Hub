@@ -8,51 +8,54 @@
 import Foundation
 import FirebaseFirestore
 
-struct Performance: Identifiable, Codable {
+struct PerformanceLog: Identifiable, Codable {
     @DocumentID var id: String?
-    var userID: String
-    var athleteName: String
-    var eventType: String // "Race" or "Training"
-    var sport: String // "Triathlon", "Run", etc.
-    var distance: Double
-    var time: Int // In seconds
-    var location: String
+    var userId: String
+    var userName: String
+    var activity: String
+    var result: String
     var date: Date
-    var notes: String
-    var createdAt: Date
+    var isPublic: Bool
 }
 
 class FirestoreService {
     static let shared = FirestoreService()
-    private init() {}
-
     private let db = Firestore.firestore()
 
-    func addPerformance(_ performance: Performance, completion: @escaping (Error?) -> Void) {
+    func fetchPerformanceLogs(completion: @escaping ([PerformanceLog]) -> Void) {
+        db.collection("performanceLogs")
+            .order(by: "date", descending: true)
+            .getDocuments { snapshot, error in
+                if let documents = snapshot?.documents {
+                    let logs = documents.compactMap {
+                        try? $0.data(as: PerformanceLog.self)
+                    }
+                    completion(logs)
+                } else {
+                    completion([])
+                }
+            }
+    }
+
+    func addPerformanceLog(_ log: PerformanceLog, completion: @escaping (Error?) -> Void) {
         do {
-            _ = try db.collection("performances").addDocument(from: performance)
-            completion(nil)
+            _ = try db.collection("performanceLogs").addDocument(from: log, completion: completion)
         } catch {
             completion(error)
         }
     }
 
-    func fetchPerformances(for userID: String, completion: @escaping ([Performance]) -> Void) {
-        db.collection("performances")
-            .whereField("userID", isEqualTo: userID)
-            .order(by: "date", descending: true)
-            .getDocuments { snapshot, error in
-                if let error = error {
-                    print("Error fetching performances: \(error)")
-                    completion([])
-                    return
-                }
+    func updatePerformanceLog(_ log: PerformanceLog, completion: @escaping (Error?) -> Void) {
+        guard let id = log.id else { return }
+        do {
+            try db.collection("performanceLogs").document(id).setData(from: log, merge: true, completion: completion)
+        } catch {
+            completion(error)
+        }
+    }
 
-                let performances = snapshot?.documents.compactMap { document in
-                    try? document.data(as: Performance.self)
-                } ?? []
-
-                completion(performances)
-            }
+    func deletePerformanceLog(_ log: PerformanceLog, completion: @escaping (Error?) -> Void) {
+        guard let id = log.id else { return }
+        db.collection("performanceLogs").document(id).delete(completion: completion)
     }
 }

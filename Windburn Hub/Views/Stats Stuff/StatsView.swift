@@ -8,17 +8,29 @@
 import SwiftUI
 
 struct StatsView: View {
+    @StateObject private var authVM = AuthViewModel()
+    @StateObject private var statsVM: StatsViewModel
+
+    init() {
+        let auth = AuthViewModel()
+        _statsVM = StateObject(wrappedValue: StatsViewModel(authViewModel: auth))
+    }
+
     var body: some View {
         TabView {
-            PerformanceListView()
-                .tabItem {
-                    Label("My Stats", systemImage: "chart.bar.fill")
-                }
+            NavigationStack {
+                PerformanceListView(vm: statsVM)
+            }
+            .tabItem {
+                Label("My Stats", systemImage: "person.fill")
+            }
 
-            AthleteStatsView()
-                .tabItem {
-                    Label("Team", systemImage: "person.3.fill")
-                }
+            NavigationStack {
+                AthleteStatsView(vm: statsVM)
+            }
+            .tabItem {
+                Label("Team", systemImage: "person.3.fill")
+            }
         }
     }
 }

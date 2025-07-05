@@ -11,7 +11,7 @@ struct ProfileImagePickerView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) var dismiss
 
-    let imageOptions = ["default", "bike1", "run1", "swim1", "windburn"]
+    let imageOptions = ["run1", "run2", "run3", "bike1", "bike2", "swim1", "swim2", "swim3", "winner", "windburn", "tri", "runswim", "podium", "finisher", "strong"]
 
     var body: some View {
         List {

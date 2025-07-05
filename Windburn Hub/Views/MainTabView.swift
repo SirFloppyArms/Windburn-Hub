@@ -12,14 +12,15 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-
+            
             ChatView()
                 .tabItem {
                     Label("Chat", systemImage: "message")
+                }
+            
+            ShopView()
+                .tabItem {
+                    Label("Shop", systemImage: "cart")
                 }
 
             CalendarView()
