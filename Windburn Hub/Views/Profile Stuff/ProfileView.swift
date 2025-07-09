@@ -12,7 +12,7 @@ struct ProfileView: View {
     @State private var showingImagePicker = false
 
     // Set of predefined image names you’ve uploaded to your asset catalog
-    let availableImages = ["run1", "run2", "run3", "bike1", "bike2", "swim1", "swim2", "swim3", "winner", "windburn", "tri", "runswim", "podium", "finisher", "strong"]
+    let availableImages = ["run1", "run2", "run3", "bike1", "bike2", "swim1", "windburn_old", "swim3", "winner", "windburn", "tri", "runswim", "podium", "finisher", "strong"]
 
     var body: some View {
         NavigationView {

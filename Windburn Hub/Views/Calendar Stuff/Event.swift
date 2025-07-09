@@ -8,6 +8,12 @@
 import Foundation
 import FirebaseFirestore
 
+extension Date {
+    var startOfMonth: Date {
+        Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
+    }
+}
+
 struct Event: Identifiable, Codable {
     @DocumentID var id: String?
     var title: String

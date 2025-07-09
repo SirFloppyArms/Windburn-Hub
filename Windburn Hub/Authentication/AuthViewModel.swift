@@ -72,6 +72,9 @@ class AuthViewModel: ObservableObject {
     }
 
     func signUp(email: String, password: String, name: String, role: String) {
+        let imageOptions = ["run1", "run2", "run3", "bike1", "bike2", "swim1", "windburn_old", "swim3", "winner", "tri", "runswim", "podium", "finisher", "strong"]
+        let randomProfileImage = imageOptions.randomElement() ?? "run1" // fallback just in case
+
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
                 print("Error signing up: \(error.localizedDescription)")
@@ -84,7 +87,7 @@ class AuthViewModel: ObservableObject {
                 "email": email,
                 "name": name,
                 "role": role,
-                "profileImage": "default", // NEW
+                "profileImage": randomProfileImage,
                 "dateJoined": Timestamp()
             ]) { error in
                 if let error = error {
