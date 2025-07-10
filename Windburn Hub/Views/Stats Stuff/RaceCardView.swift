@@ -12,6 +12,7 @@ struct RaceCardView: View {
     let canEdit: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
+    let onTap: () -> Void  // ✅ NEW
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -51,5 +52,8 @@ struct RaceCardView: View {
                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
         )
         .padding(.horizontal)
+        .onTapGesture {
+            onTap() // ✅ Open detail when tapped
+        }
     }
 }

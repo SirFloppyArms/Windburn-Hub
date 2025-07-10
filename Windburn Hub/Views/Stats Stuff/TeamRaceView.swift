@@ -11,6 +11,7 @@ struct TeamRaceView: View {
     @ObservedObject var vm: StatsViewModel
     @State private var selectedUserId: String? = nil
     @State private var editingLog: RaceLog? = nil
+    @State private var selectedLog: RaceLog? = nil
 
     var users: [String: String] {
         Dictionary(grouping: vm.allLogs, by: { $0.userId })
@@ -19,7 +20,7 @@ struct TeamRaceView: View {
 
     var filteredLogs: [RaceLog] {
         guard let userId = selectedUserId else { return [] }
-        return vm.visibleLogs(for: userId)
+        return vm.filteredLogs(for: userId)
     }
 
     var body: some View {
@@ -33,6 +34,15 @@ struct TeamRaceView: View {
                 }
                 .pickerStyle(.menu)
                 .padding(.horizontal)
+                
+                Picker("Filter by Race Type", selection: $vm.selectedRaceType) {
+                    Text("All").tag(nil as RaceType?)
+                    ForEach(RaceType.allCases) { type in
+                        Text(type.displayName).tag(type as RaceType?)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
 
                 if let _ = selectedUserId, !filteredLogs.isEmpty {
                     ScrollView {
@@ -42,6 +52,8 @@ struct TeamRaceView: View {
                                     editingLog = log
                                 } onDelete: {
                                     vm.delete(log: log)
+                                } onTap: {
+                                    selectedLog = log
                                 }
                             }
                         }
@@ -58,6 +70,9 @@ struct TeamRaceView: View {
             .navigationTitle("Team Races")
             .sheet(item: $editingLog) { log in
                 EditRaceView(viewModel: vm, log: log)
+            }
+            .sheet(item: $selectedLog) { log in
+                RaceDetailView(race: log)
             }
             .refreshable {
                 vm.fetchLogs()

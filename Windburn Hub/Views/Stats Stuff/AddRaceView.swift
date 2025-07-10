@@ -31,6 +31,8 @@ struct AddRaceView: View {
     @State private var showError = false
     @State private var errorMessage = ""
 
+    @State private var selectedRaceType: RaceType = .triathlon
+
     var body: some View {
         NavigationStack {
             Form {
@@ -39,15 +41,39 @@ struct AddRaceView: View {
                     DatePicker("Race Date", selection: $raceDate, displayedComponents: .date)
                     TextField("Location", text: $location)
                     TextField("Category", text: $category)
+
+                    Picker("Race Type", selection: $selectedRaceType) {
+                        ForEach(RaceType.allCases) { type in
+                            Text(type.displayName).tag(type)
+                        }
+                    }
                 }
 
                 Section(header: Text("Split Times")) {
-                    TextField("Swim Time", text: $swimTime)
-                    TextField("T1 Time", text: $t1Time)
-                    TextField("Bike Time", text: $bikeTime)
-                    TextField("T2 Time", text: $t2Time)
-                    TextField("Run Time", text: $runTime)
-                    TextField("Overall Time", text: $overallTime)
+                    switch selectedRaceType {
+                    case .triathlon:
+                        TextField("Swim Time", text: $swimTime)
+                        TextField("T1 Time", text: $t1Time)
+                        TextField("Bike Time", text: $bikeTime)
+                        TextField("T2 Time", text: $t2Time)
+                        TextField("Run Time", text: $runTime)
+                    case .duathlon:
+                        TextField("Run 1 Time", text: $swimTime)
+                        TextField("T1 Time", text: $t1Time)
+                        TextField("Bike Time", text: $bikeTime)
+                        TextField("T2 Time", text: $t2Time)
+                        TextField("Run 2 Time", text: $runTime)
+                    case .aquabike:
+                        TextField("Swim Time", text: $swimTime)
+                        TextField("T1 Time", text: $t1Time)
+                        TextField("Bike Time", text: $bikeTime)
+                    default:
+                        TextField("Finish Time", text: $overallTime)
+                    }
+
+                    if selectedRaceType == .triathlon || selectedRaceType == .duathlon || selectedRaceType == .aquabike {
+                        TextField("Overall Time", text: $overallTime)
+                    }
                 }
 
                 Section(header: Text("Additional Notes")) {
@@ -104,7 +130,8 @@ struct AddRaceView: View {
             runTime: runTime,
             overallTime: overallTime,
             notes: notes,
-            isPublic: isPublic
+            isPublic: isPublic,
+            raceType: selectedRaceType
         )
 
         viewModel.add(log: newLog) { success in
@@ -114,6 +141,7 @@ struct AddRaceView: View {
             } else {
                 errorMessage = "Failed to save race. Please try again."
                 showError = true
+                print("🚨 Add RaceLog failed: \(newLog)")
             }
         }
     }

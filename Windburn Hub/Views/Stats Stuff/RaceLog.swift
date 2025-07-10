@@ -8,6 +8,30 @@
 import Foundation
 import FirebaseFirestore
 
+enum RaceType: String, Codable, CaseIterable, Identifiable {
+    case triathlon
+    case duathlon
+    case aquabike
+    case runningRace
+    case cyclingRace
+    case swim
+    case other
+
+    var id: String { self.rawValue }
+
+    var displayName: String {
+        switch self {
+        case .triathlon: return "Triathlon"
+        case .duathlon: return "Duathlon"
+        case .aquabike: return "Aquabike"
+        case .runningRace: return "Running Race"
+        case .cyclingRace: return "Cycling Race"
+        case .swim: return "Swim Competition"
+        case .other: return "Other"
+        }
+    }
+}
+
 struct RaceLog: Identifiable, Codable {
     @DocumentID var id: String?
     var userId: String
@@ -26,4 +50,6 @@ struct RaceLog: Identifiable, Codable {
 
     var notes: String
     var isPublic: Bool
+
+    var raceType: RaceType
 }
