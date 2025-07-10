@@ -26,16 +26,18 @@ struct AddRaceView: View {
 
     @State private var notes = ""
     @State private var isPublic = true
-
     @State private var isSaving = false
     @State private var showError = false
     @State private var errorMessage = ""
 
     @State private var selectedRaceType: RaceType = .triathlon
+    @State private var customSegments: [RaceSegment] = []
+    @State private var newSegmentName = ""
 
     var body: some View {
         NavigationStack {
             Form {
+                // Race Info
                 Section(header: Text("Race Info")) {
                     TextField("Race Name", text: $raceName)
                     DatePicker("Race Date", selection: $raceDate, displayedComponents: .date)
@@ -49,46 +51,29 @@ struct AddRaceView: View {
                     }
                 }
 
+                // Split Times
                 Section(header: Text("Split Times")) {
-                    switch selectedRaceType {
-                    case .triathlon:
-                        TextField("Swim Time", text: $swimTime)
-                        TextField("T1 Time", text: $t1Time)
-                        TextField("Bike Time", text: $bikeTime)
-                        TextField("T2 Time", text: $t2Time)
-                        TextField("Run Time", text: $runTime)
-                    case .duathlon:
-                        TextField("Run 1 Time", text: $swimTime)
-                        TextField("T1 Time", text: $t1Time)
-                        TextField("Bike Time", text: $bikeTime)
-                        TextField("T2 Time", text: $t2Time)
-                        TextField("Run 2 Time", text: $runTime)
-                    case .aquabike:
-                        TextField("Swim Time", text: $swimTime)
-                        TextField("T1 Time", text: $t1Time)
-                        TextField("Bike Time", text: $bikeTime)
-                    default:
-                        TextField("Finish Time", text: $overallTime)
-                    }
+                    splitTimeFields(for: selectedRaceType)
 
-                    if selectedRaceType == .triathlon || selectedRaceType == .duathlon || selectedRaceType == .aquabike {
+                    if selectedRaceType == .triathlon || selectedRaceType == .duathlon || selectedRaceType == .aquabike || selectedRaceType == .other {
                         TextField("Overall Time", text: $overallTime)
                     }
                 }
 
+                // Notes
                 Section(header: Text("Additional Notes")) {
                     TextEditor(text: $notes)
                         .frame(height: 100)
                 }
 
+                // Visibility
                 Section {
                     Toggle("Make Public", isOn: $isPublic)
                 }
 
+                // Save Button
                 Section {
-                    Button {
-                        saveLog()
-                    } label: {
+                    Button(action: saveLog) {
                         if isSaving {
                             ProgressView()
                         } else {
@@ -107,6 +92,80 @@ struct AddRaceView: View {
         }
     }
 
+    // MARK: - Dynamic Split Time Inputs
+    @ViewBuilder
+    private func splitTimeFields(for type: RaceType) -> some View {
+        switch type {
+        case .triathlon:
+            TextField("Swim Time", text: $swimTime)
+            TextField("T1 Time", text: $t1Time)
+            TextField("Bike Time", text: $bikeTime)
+            TextField("T2 Time", text: $t2Time)
+            TextField("Run Time", text: $runTime)
+
+        case .duathlon:
+            TextField("Run 1 Time", text: $swimTime)
+            TextField("T1 Time", text: $t1Time)
+            TextField("Bike Time", text: $bikeTime)
+            TextField("T2 Time", text: $t2Time)
+            TextField("Run 2 Time", text: $runTime)
+
+        case .aquabike:
+            TextField("Swim Time", text: $swimTime)
+            TextField("T1 Time", text: $t1Time)
+            TextField("Bike Time", text: $bikeTime)
+
+        case .cyclingRace:
+            TextField("Bike Time", text: $bikeTime)
+
+        case .runningRace:
+            TextField("Run Time", text: $runTime)
+
+        case .swim:
+            TextField("Swim Time", text: $swimTime)
+
+        case .other:
+            ForEach(customSegments) { segment in
+                HStack {
+                    TextField("\(segment.name) Time", text: binding(for: segment))
+                    Spacer()
+                    Button {
+                        removeSegment(segment)
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+
+            HStack {
+                TextField("New Segment Name", text: $newSegmentName)
+                Button {
+                    addNewSegment()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(.green)
+                }
+                .disabled(newSegmentName.isEmpty)
+            }
+        }
+    }
+
+    // MARK: - Add New Custom Segment
+    private func addNewSegment() {
+        guard !newSegmentName.isEmpty else { return }
+        customSegments.append(RaceSegment(name: newSegmentName, time: ""))
+        newSegmentName = ""
+    }
+
+    // MARK: - Remove Custom Segment
+    private func removeSegment(_ segment: RaceSegment) {
+        if let index = customSegments.firstIndex(where: { $0.id == segment.id }) {
+            customSegments.remove(at: index)
+        }
+    }
+
+    // MARK: - Save Race Log
     private func saveLog() {
         guard let userId = authVM.user?.uid else {
             errorMessage = "You must be logged in to save a race."
@@ -131,7 +190,8 @@ struct AddRaceView: View {
             overallTime: overallTime,
             notes: notes,
             isPublic: isPublic,
-            raceType: selectedRaceType
+            raceType: selectedRaceType,
+            customSegments: selectedRaceType == .other ? customSegments : nil
         )
 
         viewModel.add(log: newLog) { success in
@@ -141,8 +201,19 @@ struct AddRaceView: View {
             } else {
                 errorMessage = "Failed to save race. Please try again."
                 showError = true
-                print("🚨 Add RaceLog failed: \(newLog)")
             }
         }
+    }
+
+    // MARK: - Bind Custom Segment Time
+    private func binding(for segment: RaceSegment) -> Binding<String> {
+        Binding(
+            get: { customSegments.first(where: { $0.id == segment.id })?.time ?? "" },
+            set: { newValue in
+                if let index = customSegments.firstIndex(where: { $0.id == segment.id }) {
+                    customSegments[index].time = newValue
+                }
+            }
+        )
     }
 }

@@ -17,6 +17,8 @@ struct EditRaceView: View {
     @State private var errorMessage = ""
 
     @State private var selectedRaceType: RaceType = .triathlon
+    @State private var newSegmentName = ""
+    @State private var customSegments: [RaceSegment] = []
 
     var body: some View {
         NavigationStack {
@@ -35,7 +37,7 @@ struct EditRaceView: View {
                     }
                 }
 
-                // Dynamic Split Times
+                // Split Times
                 Section(header: Text("Split Times")) {
                     switch selectedRaceType {
                     case .triathlon:
@@ -46,7 +48,7 @@ struct EditRaceView: View {
                         TextField("Run Time", text: $log.runTime)
 
                     case .duathlon:
-                        TextField("Run 1 Time", text: $log.swimTime) // reuse swimTime for run1
+                        TextField("Run 1 Time", text: $log.swimTime)
                         TextField("T1 Time", text: $log.t1Time)
                         TextField("Bike Time", text: $log.bikeTime)
                         TextField("T2 Time", text: $log.t2Time)
@@ -67,11 +69,43 @@ struct EditRaceView: View {
                         TextField("Swim Time", text: $log.swimTime)
 
                     case .other:
-                        TextField("Finish Time", text: $log.overallTime)
+                        // Custom segments with delete option
+                        ForEach(customSegments) { segment in
+                            HStack {
+                                TextField("\(segment.name) Time", text: binding(for: segment))
+                                Spacer()
+                                Button(action: {
+                                    if let index = customSegments.firstIndex(where: { $0.id == segment.id }) {
+                                        customSegments.remove(at: index)
+                                    }
+                                }) {
+                                    Image(systemName: "minus.circle")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+
+                        // New segment add input
+                        HStack {
+                            TextField("New Segment Name", text: $newSegmentName)
+                            Button(action: {
+                                guard !newSegmentName.isEmpty else { return }
+                                let newSegment = RaceSegment(name: newSegmentName, time: "")
+                                customSegments.append(newSegment)
+                                newSegmentName = ""
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                            }
+                        }
+
+                        // Always show Overall Time field
+                        TextField("Overall Time", text: $log.overallTime)
                     }
 
-                    // Always allow overall time input
-                    TextField("Overall Time", text: $log.overallTime)
+                    // For standard race types
+                    if selectedRaceType != .other {
+                        TextField("Overall Time", text: $log.overallTime)
+                    }
                 }
 
                 // Notes
@@ -106,14 +140,37 @@ struct EditRaceView: View {
                 Text(errorMessage)
             }
             .onAppear {
-                selectedRaceType = log.raceType ?? .triathlon
+                selectedRaceType = log.raceType
+                customSegments = log.customSegments ?? []
             }
         }
     }
 
+    // MARK: - Bind custom segment times
+    private func binding(for segment: RaceSegment) -> Binding<String> {
+        Binding<String>(
+            get: {
+                customSegments.first(where: { $0.id == segment.id })?.time ?? ""
+            },
+            set: { newValue in
+                if let index = customSegments.firstIndex(where: { $0.id == segment.id }) {
+                    customSegments[index].time = newValue
+                }
+            }
+        )
+    }
+
+    // MARK: - Save changes
     private func saveChanges() {
         isSaving = true
         log.raceType = selectedRaceType
+
+        // If 'Other', attach updated customSegments
+        if selectedRaceType == .other {
+            log.customSegments = customSegments
+        } else {
+            log.customSegments = nil
+        }
 
         viewModel.update(log: log) { success in
             isSaving = false
